@@ -4,51 +4,122 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
-    android:background="#1E1E1E"
+    android:layout_margin="8dp"
+    android:background="@drawable/bg_player_glass"
+    android:elevation="12dp"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="16dp"
+    android:paddingTop="20dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="20dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <androidx.media3.ui.DefaultTimeBar
-        android:id="@id/exo_progress"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:buffered_color="#55FFFFFF"
-        app:played_color="#FFFFFF"
-        app:scrubber_color="#FFFFFF"
-        app:unplayed_color="#33FFFFFF" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <ImageButton
+            android:id="@+id/btn_mode_toggle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_repeat"
+            app:tint="#88FFFFFF" />
+
+        <TextView
+            android:id="@id/exo_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="40dp"
+            android:gravity="center"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium" />
+
+        <androidx.media3.ui.DefaultTimeBar
+            android:id="@id/exo_progress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            app:bar_height="2dp"
+            app:scrubber_enabled_size="12dp"
+            app:scrubber_disabled_size="12dp"
+            app:buffered_color="#33FFFFFF"
+            app:played_color="#FFFFFF"
+            app:scrubber_color="#FFFFFF"
+            app:unplayed_color="#1AFFFFFF" />
+
+        <TextView
+            android:id="@id/exo_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="40dp"
+            android:gravity="center"
+            android:text="00:00"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal"
-        android:paddingTop="4dp">
+        android:paddingTop="12dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <ImageButton
-            android:id="@id/exo_prev"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/exo_ic_skip_previous"
-            app:tint="#FFFFFF" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_prev_custom"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            app:cornerRadius="26dp"
+            app:icon="@drawable/ic_skip_previous"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="32dp"
+            app:iconTint="#FFFFFF"
+            app:backgroundTint="@android:color/transparent"
+            app:rippleColor="#33FFFFFF" />
 
         <ImageButton
             android:id="@id/exo_rew"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            style="@style/ExoMediaButton.Rewind"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/exo_ic_rewind"
             app:tint="#FFFFFF" />
 
         <FrameLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp">
 
             <ImageButton
                 android:id="@+id/btn_play"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
                 android:src="@drawable/exo_ic_play_circle_filled"
                 app:tint="#FFFFFF" />
 
@@ -57,6 +128,7 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
                 android:src="@drawable/exo_ic_pause_circle_filled"
                 android:visibility="gone"
                 app:tint="#FFFFFF" />
@@ -64,19 +136,32 @@
 
         <ImageButton
             android:id="@id/exo_ffwd"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            style="@style/ExoMediaButton.FastForward"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/media3_icon_fast_forward"
             app:tint="#FFFFFF" />
 
-        <ImageButton
-            android:id="@id/exo_next"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/exo_ic_skip_next"
-            app:tint="#FFFFFF" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_next_custom"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            app:cornerRadius="26dp"
+            app:icon="@drawable/ic_skip_next"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="32dp"
+            app:iconTint="#FFFFFF"
+            app:backgroundTint="@android:color/transparent"
+            app:rippleColor="#33FFFFFF" />
 
     </LinearLayout>
 </LinearLayout>

@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.glide)
     implementation(libs.androidx.palette)
+    implementation(libs.androidx.material3.android)
+    implementation(libs.volley)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

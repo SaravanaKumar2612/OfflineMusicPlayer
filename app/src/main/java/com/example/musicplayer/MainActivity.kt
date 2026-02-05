@@ -3,6 +3,7 @@ package com.example.musicplayer
 import android.Manifest
 import android.content.ComponentName
 import android.content.ContentUris
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.GradientDrawable
@@ -82,6 +83,8 @@ class MainActivity : AppCompatActivity() {
 
     // ... other variables ...
     private lateinit var gestureDetector: androidx.core.view.GestureDetectorCompat
+    private var pendingRenameSong: Song? = null
+    private var pendingRenameTitle: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -209,16 +212,20 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun setupRecyclers() {
-        // Songs Adapter
+        // SONGS ADAPTER
         rvSongs.layoutManager = LinearLayoutManager(this)
-        songsAdapter = SongAdapter(displayItems) { song -> playSong(song) }
+        songsAdapter = SongAdapter(
+            items = displayItems,
+            onSongClick = { song -> playSong(song) },
+            onMenuClick = { view, song -> showSongOptionsMenu(view, song) } // <--- Handle the clicks
+        )
         rvSongs.adapter = songsAdapter
 
-        // Playlists Adapter
+        // PLAYLIST ADAPTER
         rvPlaylists.layoutManager = LinearLayoutManager(this)
         playlistAdapter = PlaylistAdapter(
             onClick = { playlistName -> enterPlaylistMode(playlistName) },
-            onLongClick = { playlistName -> showPlaylistOptions(playlistName) } // <--- Handle Long Click
+            onLongClick = { playlistName -> showPlaylistOptions(playlistName) }
         )
         rvPlaylists.adapter = playlistAdapter
     }
@@ -419,54 +426,70 @@ class MainActivity : AppCompatActivity() {
 
     //  DATA LOADING & LOGIC
     private fun loadSongs() {
-        allSongs.clear()
+        val songsList = mutableListOf<Song>()
+        val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+
         val projection = arrayOf(
-            MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.DURATION
         )
 
-        // Strict Filter: Music only, > 30s
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= ?"
-        val selectionArgs = arrayOf("30000")
-        val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
-
-        val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        } else {
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        }
-
         try {
-            contentResolver.query(collection, projection, selection, selectionArgs, sortOrder)?.use { cursor ->
-                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-                val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            val cursor = contentResolver.query(uri, projection, selection, null, null)
+            cursor?.use {
+                val idCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val titleCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+                val nameCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                val artistCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+                val albumCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+                val dataCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                val durCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
 
-                while (cursor.moveToNext()) {
-                    val path = cursor.getString(dataCol).lowercase()
-                    // Filter Spam folders
-                    if (path.contains("whatsapp") || path.contains("recorder") ||
-                        path.contains("call_rec") || path.contains("voice") || path.contains("telegram")) {
-                        continue
+                while (it.moveToNext()) {
+                    val path = it.getString(dataCol) ?: ""
+                    val duration = it.getLong(durCol)
+
+                    // --- FILTER JUNK (60s + WhatsApp) ---
+                    if (duration < 60000) continue
+                    if (path.contains("WhatsApp", true) ||
+                        path.contains("Telegram", true) ||
+                        path.contains("Recorder", true)) continue
+
+                    val id = it.getLong(idCol)
+                    var title = it.getString(titleCol)
+                    val displayName = it.getString(nameCol)
+                    val artist = it.getString(artistCol) ?: "<Unknown>"
+                    val albumId = it.getLong(albumCol)
+                    val songUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+
+                    // 1. Fallback to filename if title is bad
+                    if (title.isNullOrEmpty() || title.equals("unknown", true)) {
+                        title = displayName.substringBeforeLast(".")
                     }
 
-                    val id = cursor.getLong(idCol)
-                    val title = cursor.getString(titleCol) ?: "Unknown"
-                    val artist = cursor.getString(artistCol) ?: "Unknown Artist"
-                    val albumId = cursor.getLong(albumIdCol)
-                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+                    // 2. [THE FIX] OVERRIDE WITH OUR CUSTOM NAME
+                    val customName = SongPreferences.getTitle(this, id)
+                    if (customName != null) {
+                        title = customName
+                    }
 
-                    if (title.contains("AUD-") && artist.contains("<unknown>")) continue
-
-                    allSongs.add(Song(id, title, artist, albumId, uri))
+                    songsList.add(Song(id, title, artist, albumId, songUri))
                 }
             }
         } catch (e: Exception) { e.printStackTrace() }
 
-        processData("")
+        runOnUiThread {
+            allSongs.clear()
+            allSongs.addAll(songsList)
+            allSongs.sortBy { it.title.lowercase() }
+            processData(etSearchField.text.toString())
+        }
     }
 
     private fun processData(query: String) {
@@ -822,5 +845,176 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    // --- SONG MENU LOGIC (Rename / Delete) ---
+
+    private fun showSongOptionsMenu(view: View, song: Song) {
+        val popup = PopupMenu(this, view)
+
+        // Option 1: Rename (Always available)
+        popup.menu.add("Rename")
+
+        // Option 2: Remove from Playlist (Only if inside a playlist)
+        if (currentPlaylistMode != null && currentPlaylistMode != "Liked Songs") {
+            popup.menu.add("Remove from Playlist")
+        }
+
+        // Option 3: Delete from Device (Always available)
+        popup.menu.add("Delete from Device")
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Rename" -> showRenameSongDialog(song)
+                "Remove from Playlist" -> {
+                    currentPlaylistMode?.let { playlistName ->
+                        PlaylistManager.removeSongFromPlaylist(this, playlistName, song.id.toString())
+                        // Refresh the view
+                        enterPlaylistMode(playlistName)
+                        Toast.makeText(this, "Removed from $playlistName", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                "Delete from Device" -> showDeleteSongConfirmation(song)
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun showRenameSongDialog(song: Song) {
+        val input = EditText(this)
+        input.setText(song.title)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Rename Song")
+            .setMessage("Note: This changes the Display Name only.")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString()
+                if (newName.isNotEmpty()) {
+                    updateSongTitle(song, newName)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun updateSongTitle(song: Song, newTitle: String) {
+        // 1. Save to Local App Storage (Guaranteed Success)
+        SongPreferences.saveTitle(this, song.id, newTitle)
+
+        // 2. Update Memory Immediately
+        song.title = newTitle
+
+        // 3. Show Success
+        Toast.makeText(this, "Renamed to $newTitle", Toast.LENGTH_SHORT).show()
+
+        // 4. Refresh List
+        loadSongs()
+
+        // OPTIONAL: Try to update system file too (Best Effort), but don't worry if it fails.
+        // This keeps it compatible with other apps if possible.
+        try {
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.id)
+            val values = android.content.ContentValues().apply {
+                put(MediaStore.Audio.Media.TITLE, newTitle)
+            }
+            contentResolver.update(uri, values, null, null)
+        } catch (e: Exception) {
+            // Ignore errors here. We already saved it locally!
+        }
+    }
+
+    private fun showDeleteSongConfirmation(song: Song) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete File?")
+            .setMessage("This will permanently delete '${song.title}' from your phone's storage.")
+            .setPositiveButton("Delete") { _, _ ->
+                deleteSongFromDevice(song)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteSongFromDevice(song: Song) {
+        try {
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.id)
+
+            // 1. Try standard delete
+            val rows = contentResolver.delete(uri, null, null)
+
+            if (rows > 0) {
+                Toast.makeText(this, "File Deleted", Toast.LENGTH_SHORT).show()
+                loadSongs() // Refresh UI
+            } else {
+                Toast.makeText(this, "Could not delete file", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: SecurityException) {
+            // 2. Android 10+ Security Handling
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Request permission to delete
+                val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song.id)
+                val pendingIntent = MediaStore.createDeleteRequest(contentResolver, listOf(uri))
+                try {
+                    startIntentSenderForResult(pendingIntent.intentSender, 102, null, 0, 0, 0, null)
+                } catch (ex: Exception) {
+                    Toast.makeText(this, "Error requesting permission", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Handle the Permission Result for Android 11+ Deletion
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // 102 = DELETE Permission Result
+        if (requestCode == 102 && resultCode == RESULT_OK) {
+            Toast.makeText(this, "File Deleted", Toast.LENGTH_SHORT).show()
+            loadSongs()
+        }
+
+        // 103 = RENAME Permission Result
+        if (requestCode == 103 && resultCode == RESULT_OK) {
+            // User clicked "Allow". Retry the update!
+            val song = pendingRenameSong
+            val title = pendingRenameTitle
+
+            if (song != null && title != null) {
+                // This call will now succeed because the system granted temporary write access
+                updateSongTitle(song, title)
+            }
+        } else if (requestCode == 103) {
+            // User clicked "Deny"
+            pendingRenameSong = null
+            pendingRenameTitle = null
+            Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun getPathFromUri(uri: Uri): String? {
+        var path: String? = null
+        val cursor = contentResolver.query(uri, arrayOf(MediaStore.Audio.Media.DATA), null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) path = it.getString(0)
+        }
+        return path
+    }
+}
+
+// --- PASTE AT THE BOTTOM OF MainActivity.kt ---
+object SongPreferences {
+    private const val PREFS_NAME = "SongTitles"
+
+    fun saveTitle(context: Context, songId: Long, newTitle: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(songId.toString(), newTitle).apply()
+    }
+
+    fun getTitle(context: Context, songId: Long): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(songId.toString(), null)
     }
 }

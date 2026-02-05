@@ -1,167 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="#121212"
+    android:fitsSystemWindows="true">
 
-    <RelativeLayout
-        android:id="@+id/listContainer"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:background="#121212">
 
-        <LinearLayout
-            android:id="@+id/searchContainer"
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Music Player"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/btnHeaderSearch"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#FFFFFF"
+                    android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                <ImageView
+                    android:id="@+id/btnHeaderScan"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_sync"
+                    app:tint="#FFFFFF"
+                    android:background="?attr/selectableItemBackgroundBorderless"/>
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="12dp"
-            android:gravity="center_vertical">
+            android:background="#121212"
+            app:tabTextColor="#88FFFFFF"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabIndicatorColor="#FFFFFF"
+            app:tabMode="fixed"
+            app:tabGravity="fill"/>
 
-            <EditText
-                android:id="@+id/etSearch"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="1"
-                android:background="@android:drawable/editbox_background"
-                android:backgroundTint="#333333"
-                android:hint="Search songs..."
-                android:textColor="#FFFFFF"
-                android:textColorHint="#AAAAAA"
-                android:paddingStart="12dp"
-                android:drawableStart="@android:drawable/ic_menu_search"
-                android:drawableTint="#FFFFFF"
-                android:drawablePadding="8dp"
-                android:singleLine="true"/>
+        <EditText
+            android:id="@+id/etSearchField"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:background="@android:drawable/editbox_background"
+            android:backgroundTint="#333333"
+            android:hint="Type to search..."
+            android:textColor="#FFFFFF"
+            android:paddingStart="16dp"
+            android:singleLine="true"
+            android:visibility="gone"/>
 
-            <ImageButton
-                android:id="@+id/btnScan"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="8dp"
-                android:background="@android:drawable/editbox_background"
-                android:backgroundTint="#333333"
-                android:src="@drawable/ic_sync"
-                app:tint="#FFFFFF" />
-        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:id="@+id/mainFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_marginBottom="70dp">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+        android:id="@+id/rvSongs"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPlaylists"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/searchContainer"
-            android:layout_toStartOf="@id/alphabetScroller"
+            android:visibility="gone"
             android:clipToPadding="false"
-            android:paddingBottom="80dp"
-            android:scrollbars="none" />
+            android:paddingBottom="16dp"/>
 
         <com.example.musicplayer.AlphabetScroller
             android:id="@+id/alphabetScroller"
             android:layout_width="30dp"
             android:layout_height="match_parent"
-            android:layout_below="@id/searchContainer"
-            android:layout_alignParentEnd="true"
-            android:layout_marginBottom="70dp"
+            android:layout_gravity="end"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"/>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cvAlphabetBubble"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_centerInParent="true"
-            android:visibility="gone"
-            app:cardBackgroundColor="#333333"
-            app:cardCornerRadius="40dp"
-            app:cardElevation="10dp">
-            <TextView
-                android:id="@+id/tvAlphabetBubble"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="A"
-                android:textColor="#FFFFFF"
-                android:textSize="40sp"
-                android:textStyle="bold"/>
-        </androidx.cardview.widget.CardView>
+    </FrameLayout>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/miniPlayerLayout"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvAlphabetBubble"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        app:cardBackgroundColor="#333333"
+        app:cardCornerRadius="40dp">
+        <TextView
+            android:id="@+id/tvAlphabetBubble"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="8dp"
-            app:cardBackgroundColor="#252525"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="12dp"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true">
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="A"
+            android:textColor="#FFFFFF"
+            android:textSize="40sp"
+            android:textStyle="bold"/>
+    </androidx.cardview.widget.CardView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp">
+    <androidx.cardview.widget.CardView
+        android:id="@+id/miniPlayerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom"
+        android:layout_margin="8dp"
+        app:cardBackgroundColor="#252525"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="12dp"
+        android:visibility="gone">
 
-                <ImageView
-                    android:id="@+id/ivMiniArt"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@android:drawable/ic_menu_gallery"
-                    android:scaleType="centerCrop"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-                <TextView
-                    android:id="@+id/tvMiniTitle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="12dp"
-                    android:text="Song Title"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:singleLine="true"
-                    android:ellipsize="marquee"
-                    android:marqueeRepeatLimit="marquee_forever"/>
+            <ImageView
+                android:id="@+id/ivMiniArt"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"/>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnMiniPlayPause"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:insetLeft="0dp"
-                    android:insetTop="0dp"
-                    android:insetRight="0dp"
-                    android:insetBottom="0dp"
-                    android:padding="0dp"
-                    app:cornerRadius="20dp"
-                    app:icon="@android:drawable/ic_media_play"
-                    app:iconGravity="textStart"
-                    app:iconPadding="0dp"
-                    app:iconSize="24dp"
-                    app:iconTint="#FFFFFF"
-                    app:backgroundTint="@android:color/transparent"
-                    app:rippleColor="#33FFFFFF" />
+            <TextView
+                android:id="@+id/tvMiniTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="Song Title"
+                android:textColor="#FFFFFF"
+                android:singleLine="true"/>
 
-                <ImageButton
-                    android:id="@+id/btnMiniClose"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="4dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_close"
-                    android:padding="10dp"
-                    android:scaleType="fitCenter"
-                    app:tint="#FFFFFF"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMiniPlayPause"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cornerRadius="20dp"
+                app:icon="@android:drawable/ic_media_play"
+                app:iconTint="#FFFFFF"
+                app:backgroundTint="@android:color/transparent"/>
 
-    </RelativeLayout>
+            <ImageButton
+                android:id="@+id/btnMiniClose"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="#FFFFFF"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
     <LinearLayout
         android:id="@+id/playerContainer"
@@ -169,26 +193,29 @@
         android:layout_height="match_parent"
         android:background="#121212"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:visibility="gone"
-        android:padding="24dp"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        android:visibility="gone"
+        android:padding="24dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-
+            android:layout_height="wrap_content">
             <ImageButton
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/exo_ic_chevron_left"
                 app:tint="#FFFFFF"/>
-
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Now Playing"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_centerInParent="true"/>
             <ImageButton
                 android:id="@+id/btnSleepTimer"
                 android:layout_width="48dp"
@@ -196,62 +223,88 @@
                 android:layout_alignParentEnd="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_timer"
-                android:scaleType="centerInside"
-                app:tint="#FFFFFF" />
+                app:tint="#FFFFFF"/>
         </RelativeLayout>
 
         <androidx.cardview.widget.CardView
             android:layout_width="300dp"
             android:layout_height="300dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="32dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="24dp"
             app:cardCornerRadius="16dp"
-            app:cardElevation="8dp">
+            app:cardElevation="10dp">
             <ImageView
                 android:id="@+id/ivAlbumArt"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@android:drawable/ic_menu_gallery"
-                android:background="#333333"/>
+                android:src="@android:drawable/ic_menu_gallery"/>
         </androidx.cardview.widget.CardView>
 
-        <TextView
-            android:id="@+id/tvPlayerTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Song Title"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:singleLine="true"
-            android:ellipsize="marquee"
-            android:marqueeRepeatLimit="marquee_forever"/>
-
-        <TextView
-            android:id="@+id/tvPlayerArtist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Artist Name"
-            android:textSize="18sp"
-            android:textColor="#AAAAAA"/>
-
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvPlayerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Song Title"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"/>
+
+            <TextView
+                android:id="@+id/tvPlayerArtist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Artist Name"
+                android:textSize="16sp"
+                android:textColor="#AAAAAA"
+                android:gravity="center"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <ImageButton
+                android:id="@+id/btnLike"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_favorite"
+                app:tint="#FFFFFF"
+                android:layout_marginEnd="32dp"/>
+
+            <ImageButton
+                android:id="@+id/btnAddToPlaylist"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_playlist_add"
+                app:tint="#FFFFFF"
+                android:layout_marginStart="32dp"/>
+        </LinearLayout>
 
         <androidx.media3.ui.PlayerControlView
             android:id="@+id/playerControlView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
             app:controller_layout_id="@layout/custom_player_controls"
             app:show_timeout="0"
-            app:show_shuffle_button="true"
-            app:show_next_button="true"
-            app:show_previous_button="true"
-            app:repeat_toggle_modes="one|all|none" />
+            android:background="@android:color/transparent"/>
+
     </LinearLayout>
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
